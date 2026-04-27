@@ -36,6 +36,7 @@ export default function SignUpPassword() {
     const [city, setCity] = useState("");
     const [country, setCountry] = useState("");
     const [email, setEmail] = useState("");
+    const [flatUsername, setFlatUsername] = useState("");
     const [password, setPassword] = useState("");
     const [code, setCode] = useState("");
     const [error, setError] = useState("");
@@ -98,6 +99,7 @@ export default function SignUpPassword() {
             jobTitle: jobTitle,
             city: city,
             country: country,
+            flatusername: flatUsername,
         };
 
         const result = await authClient.signUp({
@@ -108,9 +110,9 @@ export default function SignUpPassword() {
 
         if (result.isFailed()) {
             if (result.error?.isUserAlreadyExists()) {
-                setError("An account with this email already exists");
+                setError("An account with this email or username already exists");
             } else if (result.error?.isInvalidUsername()) {
-                setError("Invalid uername");
+                setError("Invalid username");
             } else if (result.error?.isInvalidPassword()) {
                 setError("Invalid password");
             } else if (result.error?.isAttributesValidationFailed()) {
@@ -544,6 +546,8 @@ export default function SignUpPassword() {
                     setCountry={setCountry}
                     email={email}
                     setEmail={setEmail}
+                    flatUsername={flatUsername}
+                    setFlatUsername={setFlatUsername}
                     loading={loading}
                     onSignUpWithSocial={startSignUpWithSocial}
                 />
