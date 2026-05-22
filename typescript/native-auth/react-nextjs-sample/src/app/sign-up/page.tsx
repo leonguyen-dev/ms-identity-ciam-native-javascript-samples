@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { customAuthConfig } from "../../config/auth-config";
 import { styles } from "./styles/styles";
 import { EmailStep } from "./components/EmailStep";
@@ -32,6 +33,7 @@ import { MfaChallengeForm } from "../shared/components/MfaChallengeForm";
 type UiStep = "email" | "emailCode" | "details";
 
 export default function SignUpPage() {
+    const router = useRouter();
     const [authClient, setAuthClient] = useState<ICustomAuthPublicClientApplication | null>(null);
 
     const [uiStep, setUiStep] = useState<UiStep>("email");
@@ -83,6 +85,31 @@ export default function SignUpPage() {
 
         checkAccount();
     }, [authClient]);
+
+    const handleCancel = () => {
+        router.push("/");
+    };
+
+    const handleResendCode = async () => {
+        if (!authClient || !email) return;
+        setError("");
+        setLoading(true);
+        try {
+            const result = await authClient.signUp({ username: email });
+            const state = result.state;
+            if (result.isFailed()) {
+                setError(result.error?.errorData.errorDescription || "Failed to resend the code.");
+                return;
+            }
+            if (state instanceof SignUpCodeRequiredState) {
+                setSignUpState(state);
+            }
+        } catch (err) {
+            handleSubmitException(err, "Failed to resend the code.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const resetSignUpToStart = (message: string) => {
         setSignUpState(null);
@@ -537,7 +564,15 @@ export default function SignUpPage() {
         }
 
         if (uiStep === "email") {
-            return <EmailStep onSubmit={handleEmailSubmit} email={email} setEmail={setEmail} loading={loading} />;
+            return (
+                <EmailStep
+                    onSubmit={handleEmailSubmit}
+                    email={email}
+                    setEmail={setEmail}
+                    loading={loading}
+                    onCancel={handleCancel}
+                />
+            );
         }
 
         if (uiStep === "emailCode") {
@@ -547,6 +582,9 @@ export default function SignUpPage() {
                     code={emailCode}
                     setCode={setEmailCode}
                     loading={loading}
+                    email={email}
+                    onCancel={handleCancel}
+                    onResend={handleResendCode}
                 />
             );
         }
@@ -572,10 +610,18 @@ export default function SignUpPage() {
     };
 
     return (
-        <div style={styles.container}>
-            <h2 style={styles.h2}>Sign Up</h2>
-            {renderForm()}
-            {error && <div style={styles.error}>{error}</div>}
+        <div style={styles.pageWrapper}>
+            <div style={styles.hero}>
+                <div style={styles.heroInner}>
+                    <h1 style={styles.heroTitle}>Welcome to myServiceTas</h1>
+                </div>
+            </div>
+            <div style={styles.card}>
+                <div style={styles.cardInner}>
+                    {renderForm()}
+                    {error && <div style={styles.error}>{error}</div>}
+                </div>
+            </div>
         </div>
     );
 }

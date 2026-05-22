@@ -4,7 +4,7 @@ import type { EmailStepProps } from "../types/formProperties";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function EmailStep({ onSubmit, email, setEmail, loading }: EmailStepProps) {
+export function EmailStep({ onSubmit, email, setEmail, loading, onCancel }: EmailStepProps) {
     const [touched, setTouched] = useState(false);
     const isValid = EMAIL_REGEX.test(email);
     const showError = touched && email.length > 0 && !isValid;
@@ -18,10 +18,15 @@ export function EmailStep({ onSubmit, email, setEmail, loading }: EmailStepProps
 
     return (
         <form onSubmit={handleSubmit} style={styles.form}>
-            <label style={styles.label}>Enter your email address</label>
+            <h2 style={styles.stepHeading}>Enter your email address (1/3)</h2>
+
+            <label htmlFor="signup-email" style={styles.label}>
+                Email address
+            </label>
             <input
+                id="signup-email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={() => setTouched(true)}
@@ -30,13 +35,31 @@ export function EmailStep({ onSubmit, email, setEmail, loading }: EmailStepProps
                 required
             />
             {showError && <div style={styles.error}>Please enter a valid email address.</div>}
-            <button
-                type="submit"
-                style={loading || !isValid ? styles.buttonDisabled : styles.button}
-                disabled={loading || !isValid}
-            >
-                {loading ? "Sending..." : "Send verification code"}
-            </button>
+
+            <div style={styles.guideBox}>
+                <div style={styles.guideTitle}>Email address guide</div>
+                <ul style={styles.guideList}>
+                    <li>Enter the email address you will use to sign in to your myServiceTas account.</li>
+                    <li>We will email you a code which you will have to enter on the next screen.</li>
+                    <li>
+                        You cannot use a school email address or one you share with someone else. An email address can
+                        only be used for one account.
+                    </li>
+                </ul>
+            </div>
+
+            <div style={styles.actionsRow}>
+                <button
+                    type="submit"
+                    style={loading || !isValid ? styles.buttonDisabled : styles.button}
+                    disabled={loading || !isValid}
+                >
+                    {loading ? "Sending..." : "Send verification code"}
+                </button>
+                <button type="button" className="st-cancel-button" onClick={onCancel}>
+                    Cancel
+                </button>
+            </div>
         </form>
     );
 }

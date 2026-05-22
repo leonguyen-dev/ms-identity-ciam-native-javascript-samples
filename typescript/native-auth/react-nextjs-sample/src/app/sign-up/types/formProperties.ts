@@ -4,12 +4,16 @@ export interface EmailStepProps extends FormProps {
     onSubmit: (e: React.FormEvent) => void;
     email: string;
     setEmail: (value: string) => void;
+    onCancel: () => void;
 }
 
 export interface EmailCodeStepProps extends FormProps {
     onSubmit: (e: React.FormEvent) => void;
     code: string;
     setCode: (value: string) => void;
+    email: string;
+    onCancel: () => void;
+    onResend: () => void;
 }
 
 export interface DetailsStepProps extends FormProps {
