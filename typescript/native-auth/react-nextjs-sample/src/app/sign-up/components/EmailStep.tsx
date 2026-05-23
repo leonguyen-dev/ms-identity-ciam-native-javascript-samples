@@ -5,19 +5,19 @@ import type { EmailStepProps } from "../types/formProperties";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function EmailStep({ onSubmit, email, setEmail, loading, onCancel }: EmailStepProps) {
-    const [touched, setTouched] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
     const isValid = EMAIL_REGEX.test(email);
-    const showError = touched && email.length > 0 && !isValid;
+    const showError = submitted && !isValid;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setTouched(true);
+        setSubmitted(true);
         if (!isValid) return;
         onSubmit(e);
     };
 
     return (
-        <form onSubmit={handleSubmit} style={styles.form}>
+        <form onSubmit={handleSubmit} style={styles.form} noValidate>
             <h2 style={styles.stepHeading}>Enter your email address (1/3)</h2>
 
             <label htmlFor="signup-email" style={styles.label}>
@@ -29,10 +29,8 @@ export function EmailStep({ onSubmit, email, setEmail, loading, onCancel }: Emai
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onBlur={() => setTouched(true)}
                 style={styles.input}
                 autoFocus
-                required
             />
             {showError && <div style={styles.error}>Please enter a valid email address.</div>}
 
@@ -51,8 +49,8 @@ export function EmailStep({ onSubmit, email, setEmail, loading, onCancel }: Emai
             <div style={styles.actionsRow}>
                 <button
                     type="submit"
-                    style={loading || !isValid ? styles.buttonDisabled : styles.button}
-                    disabled={loading || !isValid}
+                    style={loading ? styles.buttonDisabled : styles.button}
+                    disabled={loading}
                 >
                     {loading ? "Sending..." : "Send verification code"}
                 </button>
