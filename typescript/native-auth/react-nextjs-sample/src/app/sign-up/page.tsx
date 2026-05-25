@@ -46,6 +46,7 @@ export default function SignUpPage() {
     const [dateOfBirth, setDateOfBirth] = useState("");
     const [termsAccepted, setTermsAccepted] = useState(false);
     const [mobileNumber, setMobileNumber] = useState("");
+    const [dialCode, setDialCode] = useState("+61");
     const [smsCode, setSmsCode] = useState("");
 
     const [error, setError] = useState("");
@@ -112,6 +113,7 @@ export default function SignUpPage() {
         setDateOfBirth("");
         setTermsAccepted(false);
         setMobileNumber("");
+        setDialCode("+61");
         setSmsCode("");
         setMfaAuthMethods([]);
         setSelectedMfaAuthMethod(undefined);
@@ -363,9 +365,10 @@ export default function SignUpPage() {
 
         setLoading(true);
         try {
+            const localNumber = mobileNumber.replace(/\D/g, "").replace(/^0+/, "");
             const result = await signUpState.challengeAuthMethod({
                 authMethodType: phoneAuthMethod,
-                verificationContact: mobileNumber,
+                verificationContact: `${dialCode} ${localNumber}`,
             });
 
             if (result.isFailed()) {
@@ -527,7 +530,10 @@ export default function SignUpPage() {
                     onSubmit={handleMobileSubmit}
                     mobileNumber={mobileNumber}
                     setMobileNumber={setMobileNumber}
+                    dialCode={dialCode}
+                    setDialCode={setDialCode}
                     loading={loading}
+                    onCancel={handleCancel}
                 />
             );
         }
