@@ -282,12 +282,6 @@ export default function Home() {
     const [mfaChallenge, setMfaChallenge] = useState("");
     const [mfaAutoRequested, setMfaAutoRequested] = useState(false);
 
-    const formatMaskedMobile = (sentTo: string): string => {
-        const digits = sentTo.replace(/\D/g, "");
-        const last3 = digits.slice(-3).padStart(3, "X");
-        return `XXXX XXX ${last3}`;
-    };
-
     const pickPhoneMethod = (methods: AuthenticationMethod[]): AuthenticationMethod | undefined => {
         const phone = methods.find((m) => {
             const ch = m.challenge_channel?.toLowerCase();
@@ -789,7 +783,7 @@ export default function Home() {
                     loading={loading}
                     onCancel={handleCancel}
                     onResend={handleResendMfaChallenge}
-                    mobileNumber={formatMaskedMobile(signInState.getSentTo())}
+                    mobileNumber={signInState.getSentTo()}
                     serverError={error}
                     expectedCodeLength={signInState.getCodeLength()}
                 />
