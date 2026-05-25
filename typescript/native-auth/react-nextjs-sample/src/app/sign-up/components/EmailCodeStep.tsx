@@ -19,21 +19,16 @@ export function EmailCodeStep({
     const [submitted, setSubmitted] = useState(false);
 
     const trimmed = code.trim();
-    const requiredLength = expectedCodeLength && expectedCodeLength > 0 ? expectedCodeLength : 6;
+    const requiredLength = expectedCodeLength && expectedCodeLength > 0 ? expectedCodeLength : 8;
     const isValid = trimmed.length === requiredLength && /^\d+$/.test(trimmed);
-    const clientErrorMessage = !trimmed
-        ? "Please enter the verification code."
-        : "Please enter a valid verification code.";
+    const clientErrorMessage = "That code is incorrect. Please try again.";
 
     const showClientError = submitted && !isValid;
     const activeFieldMessage = showClientError ? clientErrorMessage : serverError ?? "";
     const showFieldError = Boolean(activeFieldMessage);
 
     const errors: FormError[] = showClientError
-        ? [
-              { id: FIELD_ID, message: clientErrorMessage },
-              { message: "One or more fields are filled out incorrectly. Please check your entries and try again." },
-          ]
+        ? [{ id: FIELD_ID, message: clientErrorMessage }]
         : serverError
           ? [{ id: FIELD_ID, message: serverError }]
           : [];

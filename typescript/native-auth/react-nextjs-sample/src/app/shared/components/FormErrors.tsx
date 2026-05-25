@@ -17,16 +17,16 @@ interface FieldErrorProps {
 
 const formErrorStyles: Record<string, CSSProperties> = {
     summary: {
-        border: "2px solid #b91c1c",
+        border: "1px solid #b91c1c",
         backgroundColor: "#fecaca",
         padding: "1.25rem 1.5rem",
         color: "#b91c1c",
     },
     heading: {
-        fontSize: "1.0625rem",
+        fontSize: "1rem",
         fontWeight: 400,
         color: "#b91c1c",
-        marginBottom: "1rem",
+        marginBottom: "0.75rem",
     },
     list: {
         listStyle: "none",
@@ -34,7 +34,7 @@ const formErrorStyles: Record<string, CSSProperties> = {
         margin: 0,
         display: "flex",
         flexDirection: "column",
-        gap: "0.5rem",
+        gap: "0.15rem",
     },
     item: {
         display: "flex",
@@ -47,7 +47,7 @@ const formErrorStyles: Record<string, CSSProperties> = {
         padding: 0,
         cursor: "pointer",
         color: "#b91c1c",
-        fontSize: "1.0625rem",
+        fontSize: "1rem",
         fontWeight: 700,
         textDecoration: "underline",
         textAlign: "left",
@@ -60,7 +60,7 @@ const formErrorStyles: Record<string, CSSProperties> = {
         padding: 0,
         cursor: "default",
         color: "#b91c1c",
-        fontSize: "1.0625rem",
+        fontSize: "1rem",
         fontWeight: 700,
         textDecoration: "underline",
         textAlign: "left",
@@ -72,10 +72,10 @@ const formErrorStyles: Record<string, CSSProperties> = {
         alignItems: "center",
         gap: "0.5rem",
         color: "#b91c1c",
-        fontSize: "1.0625rem",
+        fontSize: "1rem",
         fontWeight: 700,
         textDecoration: "underline",
-        marginTop: "-0.75rem",
+        marginTop: "-1.5rem",
     },
     icon: {
         flexShrink: 0,

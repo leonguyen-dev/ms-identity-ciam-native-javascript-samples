@@ -5,6 +5,7 @@ export interface EmailStepProps extends FormProps {
     email: string;
     setEmail: (value: string) => void;
     onCancel: () => void;
+    serverError?: string;
 }
 
 export interface EmailCodeStepProps extends FormProps {
@@ -32,16 +33,25 @@ export interface DetailsStepProps extends FormProps {
     setDateOfBirth: (value: string) => void;
     termsAccepted: boolean;
     setTermsAccepted: (value: boolean) => void;
+    onCancel: () => void;
 }
 
 export interface MobileStepProps extends FormProps {
     onSubmit: (e: React.FormEvent) => Promise<void>;
     mobileNumber: string;
     setMobileNumber: (value: string) => void;
+    dialCode: string;
+    setDialCode: (value: string) => void;
+    onCancel: () => void;
 }
 
 export interface SmsCodeStepProps extends FormProps {
     onSubmit: (e: React.FormEvent) => Promise<void>;
     code: string;
     setCode: (value: string) => void;
+    onCancel: () => void;
+    onResend: () => void;
+    mobileNumber: string;
+    serverError?: string;
+    expectedCodeLength?: number;
 }
