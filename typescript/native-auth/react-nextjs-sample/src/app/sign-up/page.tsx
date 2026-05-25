@@ -595,6 +595,7 @@ export default function SignUpPage() {
                 termsAccepted={termsAccepted}
                 setTermsAccepted={setTermsAccepted}
                 loading={loading}
+                onCancel={handleCancel}
             />
         );
     };

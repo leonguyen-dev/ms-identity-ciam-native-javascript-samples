@@ -32,6 +32,7 @@ export interface DetailsStepProps extends FormProps {
     setDateOfBirth: (value: string) => void;
     termsAccepted: boolean;
     setTermsAccepted: (value: boolean) => void;
+    onCancel: () => void;
 }
 
 export interface MobileStepProps extends FormProps {
