@@ -32,10 +32,7 @@ export function MobileStep({
     const showError = submitted && fieldErrorMessage !== null;
 
     const errors: FormError[] = showError
-        ? [
-              { id: FIELD_ID, message: fieldErrorMessage as string },
-              { message: "One or more fields are filled out incorrectly. Please check your entries and try again." },
-          ]
+        ? [{ id: FIELD_ID, message: fieldErrorMessage as string }]
         : [];
 
     const handleSubmit = (e: React.FormEvent) => {

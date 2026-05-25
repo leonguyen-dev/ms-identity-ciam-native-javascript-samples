@@ -12,10 +12,7 @@ export function EmailStep({ onSubmit, email, setEmail, loading, onCancel }: Emai
     const showError = submitted && !isValid;
 
     const errors: FormError[] = showError
-        ? [
-              { id: EMAIL_FIELD_ID, message: "Please enter a valid email address." },
-              { message: "One or more fields are filled out incorrectly. Please check your entries and try again." },
-          ]
+        ? [{ id: EMAIL_FIELD_ID, message: "Please enter a valid email address." }]
         : [];
 
     const handleSubmit = (e: React.FormEvent) => {
