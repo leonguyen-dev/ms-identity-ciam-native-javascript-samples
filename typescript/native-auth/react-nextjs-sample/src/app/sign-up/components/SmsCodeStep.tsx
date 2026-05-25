@@ -11,6 +11,8 @@ export function SmsCodeStep({
     setCode,
     loading,
     onCancel,
+    onResend,
+    mobileNumber,
     serverError,
     expectedCodeLength,
 }: SmsCodeStepProps) {
@@ -20,18 +22,15 @@ export function SmsCodeStep({
     const requiredLength = expectedCodeLength && expectedCodeLength > 0 ? expectedCodeLength : 6;
     const isValid = trimmed.length === requiredLength && /^\d+$/.test(trimmed);
     const clientErrorMessage = !trimmed
-        ? "Please enter the SMS verification code."
-        : "Please enter a valid SMS verification code.";
+        ? "Please enter the verification code you received."
+        : "That code is incorrect. Please try again.";
 
     const showClientError = submitted && !isValid;
     const activeFieldMessage = showClientError ? clientErrorMessage : serverError ?? "";
     const showFieldError = Boolean(activeFieldMessage);
 
     const errors: FormError[] = showClientError
-        ? [
-              { id: FIELD_ID, message: clientErrorMessage },
-              { message: "One or more fields are filled out incorrectly. Please check your entries and try again." },
-          ]
+        ? [{ id: FIELD_ID, message: clientErrorMessage }]
         : serverError
           ? [{ id: FIELD_ID, message: serverError }]
           : [];
@@ -45,9 +44,13 @@ export function SmsCodeStep({
 
     return (
         <form onSubmit={handleSubmit} style={styles.form} noValidate>
-            <h2 style={styles.stepHeading}>Enter SMS verification code</h2>
+            <h2 style={styles.stepHeading}>Enter your code (3/3)</h2>
 
             <ErrorSummary errors={errors} />
+
+            <div style={styles.sentBanner}>
+                We sent a code to <strong>{mobileNumber}</strong>
+            </div>
 
             <label htmlFor={FIELD_ID} style={styles.label}>
                 Code
@@ -72,6 +75,19 @@ export function SmsCodeStep({
                 </button>
                 <button type="button" className="st-cancel-button" onClick={onCancel}>
                     Cancel
+                </button>
+            </div>
+
+            <div style={styles.resendLine}>
+                Haven&apos;t got an SMS from us?{" "}
+                <button
+                    type="button"
+                    className="st-text-button"
+                    style={styles.resendButton}
+                    onClick={onResend}
+                    disabled={loading}
+                >
+                    Resend the code
                 </button>
             </div>
         </form>

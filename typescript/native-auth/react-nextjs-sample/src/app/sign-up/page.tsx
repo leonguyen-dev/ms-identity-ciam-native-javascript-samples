@@ -402,6 +402,40 @@ export default function SignUpPage() {
         }
     };
 
+    const handleResendSmsCode = async () => {
+        if (!(signUpState instanceof AuthMethodVerificationRequiredState)) return;
+        if (!phoneAuthMethod) {
+            setError("No phone authentication method is available for this account.");
+            return;
+        }
+        setError("");
+        setLoading(true);
+        try {
+            const localNumber = mobileNumber.replace(/\D/g, "").replace(/^0+/, "");
+            const result = await signUpState.challengeAuthMethod({
+                authMethodType: phoneAuthMethod,
+                verificationContact: `${dialCode} ${localNumber}`,
+            });
+
+            if (result.isFailed()) {
+                if (result.error?.isTokenExpired()) {
+                    resetSignUpToStart("Your sign-up session expired. Please start again.");
+                    return;
+                }
+                setError(result.error?.errorData?.errorDescription || "Failed to resend the SMS code.");
+                return;
+            }
+
+            if (result.isVerificationRequired()) {
+                setSignUpState(result.state);
+            }
+        } catch (err) {
+            handleSubmitException(err, "Failed to resend the SMS code.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSmsCodeSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
@@ -546,6 +580,8 @@ export default function SignUpPage() {
                     setCode={setSmsCode}
                     loading={loading}
                     onCancel={handleCancel}
+                    onResend={handleResendSmsCode}
+                    mobileNumber={mobileNumber}
                     serverError={error}
                 />
             );
