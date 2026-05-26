@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthClient } from "@/auth/AuthClientProvider";
 import { styles } from "./styles/styles";
-import { EmailStep } from "./components/EmailStep";
-import { EmailCodeStep } from "./components/EmailCodeStep";
 import { DetailsStep } from "./components/DetailsStep";
 import { MobileStep } from "./components/MobileStep";
-import { SmsCodeStep } from "./components/SmsCodeStep";
+import { EmailStep } from "../shared/components/EmailStep";
+import { VerificationCodeStep } from "../shared/components/VerificationCodeStep";
 import {
     AuthFlowStateBase,
     CustomAuthAccountData,
@@ -30,6 +29,8 @@ import { MfaChallengeForm } from "../shared/components/MfaChallengeForm";
 import { WarningIcon } from "../shared/components/FormErrors";
 import { friendlyAuthError, isContinuationTokenExpired } from "../shared/utils/friendlyAuthError";
 import { normalizeMobile, toLocalNumber } from "../shared/utils/formatMobile";
+import { pickPhoneMethod } from "../shared/utils/authMethods";
+import { describePasswordError } from "../shared/utils/passwordValidation";
 
 type UiStep = "email" | "emailCode" | "details";
 
@@ -122,25 +123,6 @@ export default function SignUpPage() {
         setMfaChallenge("");
         setPhoneAuthMethod(undefined);
         setError(message);
-    };
-
-    const describePasswordError = (subError: string | undefined): string => {
-        switch (subError) {
-            case "password_too_weak":
-                return "Your password is too weak. Use at least 3 of: lowercase, uppercase, numbers, symbols.";
-            case "password_too_short":
-                return "Your password is too short. It must be at least 8 characters.";
-            case "password_too_long":
-                return "Your password is too long. Please choose a shorter one.";
-            case "password_recently_used":
-                return "You can't reuse a recent password. Please choose a different one.";
-            case "password_banned":
-                return "That password is too common or contains a banned word. Please choose something less guessable.";
-            case "password_is_invalid":
-                return "Your password contains disallowed characters. Please choose a different one.";
-            default:
-                return "Invalid password.";
-        }
     };
 
     // Some flows (e.g. handleResendCode, handleAutoSignIn) don't currently rely on
@@ -356,14 +338,6 @@ export default function SignUpPage() {
             setSignUpState(result.state);
             setSignInState(true);
         }
-    };
-
-    const pickPhoneMethod = (methods: AuthenticationMethod[]): AuthenticationMethod | undefined => {
-        const phone = methods.find((m) => {
-            const ch = m.challenge_channel?.toLowerCase();
-            return ch === "sms" || ch === "phone";
-        });
-        return phone ?? methods[0];
     };
 
     const handleMobileSubmit = async (e: React.FormEvent) => {
@@ -585,16 +559,23 @@ export default function SignUpPage() {
 
         if (signUpState instanceof AuthMethodVerificationRequiredState) {
             return (
-                <SmsCodeStep
+                <VerificationCodeStep
                     onSubmit={handleSmsCodeSubmit}
                     code={smsCode}
                     setCode={setSmsCode}
                     loading={loading}
                     onCancel={handleCancel}
                     onResend={handleResendSmsCode}
-                    mobileNumber={mobileNumber}
+                    fieldId="signup-sms-code"
+                    heading="Enter your code (3/3)"
+                    sentMessage={<>We sent a code to <strong>{mobileNumber}</strong></>}
+                    resendPrompt="Haven't got an SMS from us?"
                     serverError={error}
-                    stepIndicator="3/3"
+                    defaultCodeLength={6}
+                    placeholder="Verification code"
+                    submitButtonText="Verify code"
+                    submitButtonLoadingText="Verifying..."
+                    emptyCodeMessage="Please enter the verification code you received."
                 />
             );
         }
@@ -641,21 +622,35 @@ export default function SignUpPage() {
                     loading={loading}
                     onCancel={handleCancel}
                     serverError={error}
+                    fieldId="signup-email"
+                    heading="Enter your email address (1/3)"
+                    guideTitle="Email address guide"
+                    guideItems={[
+                        "Enter the email address you will use to sign in to your myServiceTas account.",
+                        "We will email you a code which you will have to enter on the next screen.",
+                        "You cannot use a school email address or one you share with someone else. An email address can only be used for one account.",
+                    ]}
                 />
             );
         }
 
         if (uiStep === "emailCode") {
             return (
-                <EmailCodeStep
+                <VerificationCodeStep
                     onSubmit={handleEmailCodeSubmit}
                     code={emailCode}
                     setCode={setEmailCode}
                     loading={loading}
-                    email={email}
                     onCancel={handleCancel}
                     onResend={handleResendCode}
+                    fieldId="signup-email-code"
+                    heading="Enter the code (1/3)"
+                    sentMessage={<>We sent an email to <strong>{email}</strong></>}
+                    resendPrompt="Haven't got an email from us?"
                     serverError={error}
+                    placeholder="Enter your code"
+                    submitButtonText="Next"
+                    submitButtonLoadingText="Working..."
                 />
             );
         }
