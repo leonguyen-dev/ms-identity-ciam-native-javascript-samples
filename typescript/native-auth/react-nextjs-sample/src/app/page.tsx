@@ -22,6 +22,7 @@ import { CodeForm } from "./shared/components/CodeForm";
 import { MobileStep } from "./sign-up/components/MobileStep";
 import { SmsCodeStep } from "./sign-up/components/SmsCodeStep";
 import { styles as signUpStyles } from "./sign-up/styles/styles";
+import { friendlyAuthError, isContinuationTokenExpired } from "./shared/utils/friendlyAuthError";
 
 const styles = {
     page: {
@@ -303,6 +304,31 @@ export default function Home() {
         setError("");
     };
 
+    // AADSTS552001 (continuation_token expired) wipes the server-side flow state, so
+    // staying on the current step would leave the form stuck. Reset to the email step
+    // (preserving the email so the user can resume quickly) and surface the message.
+    const resetSignInToStart = (message: string) => {
+        setSignInState(null);
+        setPassword("");
+        setCode("");
+        setMobileNumber("");
+        setSmsCode("");
+        setPhoneAuthMethod(undefined);
+        setSelectedMfaAuthMethod(undefined);
+        setMfaChallenge("");
+        setMfaAutoRequested(false);
+        setError(message);
+    };
+
+    const handleAuthFailure = (err: unknown, fallback: string): boolean => {
+        if (isContinuationTokenExpired(err)) {
+            resetSignInToStart(friendlyAuthError(err, fallback));
+            return true;
+        }
+        setError(friendlyAuthError(err, fallback));
+        return false;
+    };
+
     useEffect(() => {
         if (!authClient) return;
         const accountResult = authClient.getCurrentAccount();
@@ -341,9 +367,9 @@ export default function Home() {
             const accountResult = authClient.getCurrentAccount();
 
             if (accountResult.isFailed()) {
-                setError(
-                    accountResult.error?.errorData?.errorDescription ??
-                        "An error occurred while getting the account from cache"
+                handleAuthFailure(
+                    accountResult.error,
+                    "An error occurred while getting the account from cache"
                 );
             }
 
@@ -377,9 +403,7 @@ export default function Home() {
             } else if (startResult.error?.isRedirectRequired()) {
                 await handleRedirectFallback();
             } else {
-                setError(
-                    `An error occurred: ${startResult.error?.errorData?.errorDescription ?? "unknown error"}`
-                );
+                handleAuthFailure(startResult.error, "An error occurred while signing in.");
             }
         }
 
@@ -407,9 +431,9 @@ export default function Home() {
                 if (passwordResult.error?.isInvalidPassword()) {
                     setError("Incorrect password");
                 } else {
-                    setError(
-                        passwordResult.error?.errorData?.errorDescription ||
-                            "An error occurred while verifying the password"
+                    handleAuthFailure(
+                        passwordResult.error,
+                        "An error occurred while verifying the password"
                     );
                 }
             }
@@ -450,9 +474,7 @@ export default function Home() {
                 if (result.error?.isInvalidPassword()) {
                     setError("Incorrect password");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription || "An error occurred while verifying the password"
-                    );
+                    handleAuthFailure(result.error, "An error occurred while verifying the password");
                 }
             }
 
@@ -491,7 +513,7 @@ export default function Home() {
                 if (result.error?.isInvalidCode()) {
                     setError("Invalid code");
                 } else {
-                    setError(result.error?.errorData?.errorDescription || "An error occurred while verifying the code");
+                    handleAuthFailure(result.error, "An error occurred while verifying the code");
                 }
             }
 
@@ -527,7 +549,7 @@ export default function Home() {
             const state = result.state;
 
             if (result.isFailed()) {
-                setError(result.error?.errorData?.errorDescription || "An error occurred while resending the code");
+                handleAuthFailure(result.error, "An error occurred while resending the code");
             } else {
                 setSignInState(state);
                 setResendCountdown(30);
@@ -569,10 +591,7 @@ export default function Home() {
                 } else if (result.error?.isVerificationContactBlocked()) {
                     setError("This mobile number is blocked. Please use a different number.");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription ||
-                            "An error occurred while sending the SMS code."
-                    );
+                    handleAuthFailure(result.error, "An error occurred while sending the SMS code.");
                 }
             }
 
@@ -608,7 +627,7 @@ export default function Home() {
             const state = result.state;
 
             if (result.isFailed()) {
-                setError(result.error?.errorData?.errorDescription || "Failed to resend the SMS code.");
+                handleAuthFailure(result.error, "Failed to resend the SMS code.");
                 return;
             }
 
@@ -632,10 +651,7 @@ export default function Home() {
                 if (result.error?.isIncorrectChallenge && result.error.isIncorrectChallenge()) {
                     setError("Incorrect code.");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription ||
-                            "An error occurred while verifying the SMS code."
-                    );
+                    handleAuthFailure(result.error, "An error occurred while verifying the SMS code.");
                 }
             }
 
@@ -654,10 +670,7 @@ export default function Home() {
         const next = result.state;
 
         if (result.isFailed()) {
-            setError(
-                result.error?.errorData?.errorDescription ||
-                    "An error occurred while sending the verification code."
-            );
+            handleAuthFailure(result.error, "An error occurred while sending the verification code.");
             return;
         }
 
@@ -693,10 +706,7 @@ export default function Home() {
                 if (result.error?.isIncorrectChallenge()) {
                     setError("Incorrect code.");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription ||
-                            "An error occurred while verifying the challenge response"
-                    );
+                    handleAuthFailure(result.error, "An error occurred while verifying the challenge response");
                 }
             }
 

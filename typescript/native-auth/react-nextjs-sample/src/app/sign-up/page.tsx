@@ -28,6 +28,7 @@ import {
 import { MfaAuthMethodSelectionForm } from "../shared/components/MfaAuthMethodSelectionForm";
 import { MfaChallengeForm } from "../shared/components/MfaChallengeForm";
 import { WarningIcon } from "../shared/components/FormErrors";
+import { friendlyAuthError, isContinuationTokenExpired } from "../shared/utils/friendlyAuthError";
 
 type UiStep = "email" | "emailCode" | "details";
 
@@ -89,7 +90,7 @@ export default function SignUpPage() {
             const result = await authClient.signUp({ username: email });
             const state = result.state;
             if (result.isFailed()) {
-                setError(result.error?.errorData.errorDescription || "Failed to resend the code.");
+                handleAuthFailure(result.error, "Failed to resend the code.");
                 return;
             }
             if (state instanceof SignUpCodeRequiredState) {
@@ -141,6 +142,17 @@ export default function SignUpPage() {
         }
     };
 
+    // Some flows (e.g. handleResendCode, handleAutoSignIn) don't currently rely on
+    // the SDK's isTokenExpired() helper, so guard them with the AADSTS code check too.
+    const handleAuthFailure = (err: unknown, fallback: string): boolean => {
+        if (isContinuationTokenExpired(err)) {
+            resetSignUpToStart(friendlyAuthError(err, "Your sign-up session expired. Please start again."));
+            return true;
+        }
+        setError(friendlyAuthError(err, fallback));
+        return false;
+    };
+
     const handleSubmitException = (err: unknown, fallback: string): void => {
         if (err instanceof InvalidArgumentError) {
             const desc = err.errorDescription ?? "";
@@ -178,7 +190,7 @@ export default function SignUpPage() {
                 } else if (result.error?.isInvalidUsername()) {
                     setError("Please enter a valid email address.");
                 } else {
-                    setError(result.error?.errorData.errorDescription || "An error occurred while signing up.");
+                    handleAuthFailure(result.error, "An error occurred while signing up.");
                 }
                 return;
             }
@@ -225,7 +237,7 @@ export default function SignUpPage() {
                 } else if (result.error?.isInvalidCode()) {
                     setError("That code is incorrect. Please try again.");
                 } else {
-                    setError(result.error?.errorData.errorDescription || "Failed to verify the email code.");
+                    setError(friendlyAuthError(result.error, "Failed to verify the email code."));
                 }
                 return;
             }
@@ -269,7 +281,7 @@ export default function SignUpPage() {
                     } else if (pwResult.error?.isInvalidPassword()) {
                         setError(describePasswordError(pwResult.error.errorData?.subError));
                     } else {
-                        setError(pwResult.error?.errorData.errorDescription || "Failed to submit password.");
+                        setError(friendlyAuthError(pwResult.error, "Failed to submit password."));
                     }
                     return;
                 }
@@ -293,7 +305,7 @@ export default function SignUpPage() {
                     } else if (attrResult.error?.isMissingRequiredAttributes()) {
                         setError("Missing required details.");
                     } else {
-                        setError(attrResult.error?.errorData.errorDescription || "Failed to submit details.");
+                        setError(friendlyAuthError(attrResult.error, "Failed to submit details."));
                     }
                     return;
                 }
@@ -319,7 +331,7 @@ export default function SignUpPage() {
         const result = await completedState.signIn();
 
         if (result.isFailed()) {
-            setError(result.error?.errorData?.errorDescription || "An error occurred during auto sign-in.");
+            handleAuthFailure(result.error, "An error occurred during auto sign-in.");
         }
 
         if (result.isAuthMethodRegistrationRequired()) {
@@ -380,9 +392,7 @@ export default function SignUpPage() {
                 } else if (result.error?.isVerificationContactBlocked()) {
                     setError("This mobile number is blocked. Please use a different number.");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription || "An error occurred while sending the SMS code."
-                    );
+                    setError(friendlyAuthError(result.error, "An error occurred while sending the SMS code."));
                 }
             }
 
@@ -422,7 +432,7 @@ export default function SignUpPage() {
                     resetSignUpToStart("Your sign-up session expired. Please start again.");
                     return;
                 }
-                setError(result.error?.errorData?.errorDescription || "Failed to resend the SMS code.");
+                setError(friendlyAuthError(result.error, "Failed to resend the SMS code."));
                 return;
             }
 
@@ -453,9 +463,7 @@ export default function SignUpPage() {
                 } else if (result.error?.isIncorrectChallenge && result.error.isIncorrectChallenge()) {
                     setError("Incorrect code.");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription || "An error occurred while verifying the SMS code."
-                    );
+                    setError(friendlyAuthError(result.error, "An error occurred while verifying the SMS code."));
                 }
             }
 
@@ -493,8 +501,7 @@ export default function SignUpPage() {
                         setError("Incorrect verification contact.");
                     } else {
                         setError(
-                            result.error?.errorData?.errorDescription ||
-                                "An error occurred while verifying the authentication method"
+                            friendlyAuthError(result.error, "An error occurred while verifying the authentication method")
                         );
                     }
                 }
@@ -532,8 +539,7 @@ export default function SignUpPage() {
                         setError("Incorrect code.");
                     } else {
                         setError(
-                            result.error?.errorData?.errorDescription ||
-                                "An error occurred while verifying the challenge response"
+                            friendlyAuthError(result.error, "An error occurred while verifying the challenge response")
                         );
                     }
                 }

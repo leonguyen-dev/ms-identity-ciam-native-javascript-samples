@@ -23,6 +23,7 @@ import { AuthMethodRegistrationForm } from "../shared/components/AuthMethodRegis
 import { AuthMethodRegistrationChallengeForm } from "../shared/components/AuthMethodRegistrationChallengeForm";
 import { MfaAuthMethodSelectionForm } from "../shared/components/MfaAuthMethodSelectionForm";
 import { MfaChallengeForm } from "../shared/components/MfaChallengeForm";
+import { friendlyAuthError, isContinuationTokenExpired } from "../shared/utils/friendlyAuthError";
 
 export default function ResetPassword() {
     const app = useAuthClient();
@@ -66,6 +67,32 @@ export default function ResetPassword() {
         checkAccount();
     }, [app]);
 
+    // AADSTS552001 (continuation_token expired) wipes the server-side flow state, so
+    // staying on the current step would leave the form stuck. Reset to the initial
+    // form (preserving the username so the user can resume quickly).
+    const resetResetPasswordToStart = (message: string) => {
+        setResetState(null);
+        setCode("");
+        setNewPassword("");
+        setAuthMethodsForRegistration([]);
+        setSelectedAuthMethodForRegistration(undefined);
+        setVerificationContactForRegistration("");
+        setChallengeForRegistration("");
+        setMfaAuthMethods([]);
+        setSelectedMfaAuthMethod(undefined);
+        setMfaChallenge("");
+        setError(message);
+    };
+
+    const handleAuthFailure = (err: unknown, fallback: string): boolean => {
+        if (isContinuationTokenExpired(err)) {
+            resetResetPasswordToStart(friendlyAuthError(err, fallback));
+            return true;
+        }
+        setError(friendlyAuthError(err, fallback));
+        return false;
+    };
+
     const handleInitialSubmit = async (e: React.FormEvent) => {
         if (!app) return;
 
@@ -85,9 +112,7 @@ export default function ResetPassword() {
             } else if (result.error?.isUserNotFound()) {
                 setError("User not found");
             } else {
-                setError(
-                    result.error?.errorData.errorDescription || "An error occurred while initiating password reset"
-                );
+                handleAuthFailure(result.error, "An error occurred while initiating password reset");
             }
         } else {
             setResetState(state);
@@ -106,7 +131,7 @@ export default function ResetPassword() {
             const state = result.state;
 
             if (result.isFailed()) {
-                setError(result.error?.errorData.errorDescription || "An error occurred while resending the code");
+                handleAuthFailure(result.error, "An error occurred while resending the code");
             } else {
                 setResetState(state);
                 setResendCountdown(30);
@@ -137,7 +162,7 @@ export default function ResetPassword() {
                 if (result.error?.isInvalidCode()) {
                     setError("Invalid verification code");
                 } else {
-                    setError(result.error?.errorData.errorDescription || "An error occurred while verifying the code");
+                    handleAuthFailure(result.error, "An error occurred while verifying the code");
                 }
             } else {
                 setResetState(state);
@@ -160,9 +185,7 @@ export default function ResetPassword() {
                 if (result.error?.isInvalidPassword()) {
                     setError("Invalid password");
                 } else {
-                    setError(
-                        result.error?.errorData.errorDescription || "An error occurred while setting new password"
-                    );
+                    handleAuthFailure(result.error, "An error occurred while setting new password");
                 }
             } else {
                 setResetState(state);
@@ -184,7 +207,7 @@ export default function ResetPassword() {
             const state = result.state;
 
             if (result.isFailed()) {
-                setError(result.error?.errorData?.errorDescription || "An error occurred during auto sign-in");
+                handleAuthFailure(result.error, "An error occurred during auto sign-in");
             }
 
             if (result.isAuthMethodRegistrationRequired()) {
@@ -232,10 +255,7 @@ export default function ResetPassword() {
                         "The verification contact is blocked. Consider using a different contact or a different authentication method"
                     );
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription ||
-                            "An error occurred while verifying the authentication method"
-                    );
+                    handleAuthFailure(result.error, "An error occurred while verifying the authentication method");
                 }
             }
 
@@ -271,10 +291,7 @@ export default function ResetPassword() {
                 if (result.error?.isIncorrectChallenge()) {
                     setError("Incorrect code.");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription ||
-                            "An error occurred while verifying the challenge response"
-                    );
+                    handleAuthFailure(result.error, "An error occurred while verifying the challenge response");
                 }
             }
 
@@ -306,10 +323,7 @@ export default function ResetPassword() {
                 if (result.error?.isInvalidInput()) {
                     setError("Incorrect verification contact.");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription ||
-                            "An error occurred while verifying the authentication method"
-                    );
+                    handleAuthFailure(result.error, "An error occurred while verifying the authentication method");
                 }
             }
 
@@ -339,10 +353,7 @@ export default function ResetPassword() {
                 if (result.error?.isIncorrectChallenge()) {
                     setError("Incorrect code.");
                 } else {
-                    setError(
-                        result.error?.errorData?.errorDescription ||
-                            "An error occurred while verifying the challenge response"
-                    );
+                    handleAuthFailure(result.error, "An error occurred while verifying the challenge response");
                 }
             }
 
