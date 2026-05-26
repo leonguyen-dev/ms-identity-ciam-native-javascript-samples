@@ -23,6 +23,7 @@ import { MobileStep } from "./sign-up/components/MobileStep";
 import { SmsCodeStep } from "./sign-up/components/SmsCodeStep";
 import { styles as signUpStyles } from "./sign-up/styles/styles";
 import { friendlyAuthError, isContinuationTokenExpired } from "./shared/utils/friendlyAuthError";
+import { normalizeMobile, toLocalNumber } from "./shared/utils/formatMobile";
 
 const styles = {
     page: {
@@ -577,9 +578,14 @@ export default function Home() {
             return;
         }
 
+        const normalizedMobile = normalizeMobile(mobileNumber);
+        if (normalizedMobile !== mobileNumber) {
+            setMobileNumber(normalizedMobile);
+        }
+
         setLoading(true);
         try {
-            const localNumber = mobileNumber.replace(/\D/g, "").replace(/^0+/, "");
+            const localNumber = toLocalNumber(normalizedMobile);
             const result = await signInState.challengeAuthMethod({
                 authMethodType: phoneAuthMethod,
                 verificationContact: `${dialCode} ${localNumber}`,
@@ -619,7 +625,7 @@ export default function Home() {
         setError("");
         setLoading(true);
         try {
-            const localNumber = mobileNumber.replace(/\D/g, "").replace(/^0+/, "");
+            const localNumber = toLocalNumber(mobileNumber);
             const result = await signInState.challengeAuthMethod({
                 authMethodType: phoneAuthMethod,
                 verificationContact: `${dialCode} ${localNumber}`,

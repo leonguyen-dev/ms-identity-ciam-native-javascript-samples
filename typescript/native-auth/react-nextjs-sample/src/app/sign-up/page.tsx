@@ -29,6 +29,7 @@ import { MfaAuthMethodSelectionForm } from "../shared/components/MfaAuthMethodSe
 import { MfaChallengeForm } from "../shared/components/MfaChallengeForm";
 import { WarningIcon } from "../shared/components/FormErrors";
 import { friendlyAuthError, isContinuationTokenExpired } from "../shared/utils/friendlyAuthError";
+import { normalizeMobile, toLocalNumber } from "../shared/utils/formatMobile";
 
 type UiStep = "email" | "emailCode" | "details";
 
@@ -375,9 +376,14 @@ export default function SignUpPage() {
             return;
         }
 
+        const normalizedMobile = normalizeMobile(mobileNumber);
+        if (normalizedMobile !== mobileNumber) {
+            setMobileNumber(normalizedMobile);
+        }
+
         setLoading(true);
         try {
-            const localNumber = mobileNumber.replace(/\D/g, "").replace(/^0+/, "");
+            const localNumber = toLocalNumber(normalizedMobile);
             const result = await signUpState.challengeAuthMethod({
                 authMethodType: phoneAuthMethod,
                 verificationContact: `${dialCode} ${localNumber}`,
@@ -421,7 +427,7 @@ export default function SignUpPage() {
         setError("");
         setLoading(true);
         try {
-            const localNumber = mobileNumber.replace(/\D/g, "").replace(/^0+/, "");
+            const localNumber = toLocalNumber(mobileNumber);
             const result = await signUpState.challengeAuthMethod({
                 authMethodType: phoneAuthMethod,
                 verificationContact: `${dialCode} ${localNumber}`,
